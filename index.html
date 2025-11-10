@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Policía de Los Santos Network</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 0.75rem 2rem;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        .content-section {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #1e3c72;
+            margin-bottom: 1.5rem;
+            font-size: 2.5rem;
+            border-bottom: 3px solid #2a5298;
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            color: #2a5298;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        p {
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-card h3 {
+            color: #1e3c72;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .academy-cta {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 3rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .academy-cta h2 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .apply-btn {
+            display: inline-block;
+            background: white;
+            color: #1e3c72;
+            padding: 1rem 3rem;
+            margin-top: 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            border: none;
+        }
+
+        .apply-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .apply-btn.disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .apply-btn.disabled:hover {
+            transform: none;
+        }
+
+        .requirements {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-left: 4px solid #2a5298;
+            margin: 1.5rem 0;
+            border-radius: 5px;
+        }
+
+        .requirements ul {
+            margin-left: 2rem;
+            margin-top: 1rem;
+        }
+
+        .requirements li {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .login-box {
+            max-width: 400px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 1rem 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 0.8rem;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-box button:hover {
+            background: #2a5298;
+        }
+
+        .results-content {
+            display: none;
+        }
+
+        .results-content.active {
+            display: block;
+        }
+
+        .edit-controls {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .edit-controls textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 1rem;
+            margin: 1rem 0;
+        }
+
+        .edit-controls button {
+            background: #28a745;
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 1rem;
+        }
+
+        .edit-controls button:hover {
+            background: #218838;
+        }
+
+        .logout-btn {
+            background: #dc3545 !important;
+        }
+
+        .logout-btn:hover {
+            background: #c82333 !important;
+        }
+
+        .postulation-controls {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .postulation-status {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .status-open {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .status-closed {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+
+        .toggle-btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-open {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-open:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+
+        .btn-close {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-close:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .results-list {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+        }
+
+        .result-item {
+            background: white;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .result-item h3 {
+            color: #1e3c72;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-entry {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            background: white;
+            border-radius: 5px;
+            gap: 1rem;
+        }
+
+        .status-icon {
+            font-size: 1.5rem;
+            min-width: 30px;
+        }
+
+        .approved {
+            color: #28a745;
+        }
+
+        .failed {
+            color: #dc3545;
+        }
+
+        .result-name {
+            flex: 1;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .result-score {
+            font-weight: bold;
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+        }
+
+        .score-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .score-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 700px;
+            margin: 2rem auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .btn-submit:hover {
+            background: #218838;
+        }
+
+        .btn-cancel {
+            width: 100%;
+            padding: 1rem;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: #1e3c72;
+            border-bottom-color: #2a5298;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .admin-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .applicant-card {
+            background: white;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .question-item {
+            background: white;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #2a5298;
+        }
+
+        .question-item.fixed {
+            border-left-color: #6c757d;
+            background: #e9ecef;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 0.25rem;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0 1rem;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .nav-btn {
+                padding: 0.6rem 1.5rem;
+                font-size: 0.9rem;
+            }
+
+            .content-section {
+                padding: 2rem 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🚔 LA POLICÍA DE LOS SANTOS NETWORK</div>
+            <nav class="nav">
+                <button class="nav-btn active" onclick="showSection('info')">Información</button>
+                <button class="nav-btn" onclick="showSection('academia')">Academia</button>
+                <button class="nav-btn" onclick="showSection('resultados')">Resultados</button>
+                <button class="nav-btn" onclick="showSection('acceder')">Acceder</button>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="info" class="content-section active">
+            <h1>Bienvenido a La Policía de Los Santos Network</h1>
+            <p>Somos una organización dedicada a mantener el orden, la seguridad y la justicia en nuestra comunidad. Nuestro compromiso es servir y proteger a todos los ciudadanos con profesionalismo, integridad y respeto.</p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🎯 Nuestra Misión</h3>
+                    <p>Garantizar la seguridad ciudadana mediante un servicio policial de excelencia, basado en valores y el respeto a los derechos humanos.</p>
+                </div>
+                <div class="info-card">
+                    <h3>👁️ Nuestra Visión</h3>
+                    <p>Ser reconocidos como una institución policial modelo, referente en profesionalismo, tecnología y cercanía con la comunidad.</p>
+                </div>
+                <div class="info-card">
+                    <h3>⚖️ Nuestros Valores</h3>
+                    <p>Integridad, lealtad, disciplina, respeto, honestidad y compromiso con el servicio público.</p>
+                </div>
+            </div>
+
+            <h2>Servicios que Ofrecemos</h2>
+            <p>La Policía de Los Santos Network está comprometida con la protección y el bienestar de todos los ciudadanos. Nuestros servicios incluyen patrullaje preventivo, atención de emergencias, investigación criminal, y programas de prevención comunitaria.</p>
+
+            <h2>Contacto</h2>
+            <p>Para emergencias: 911<br>
+            Para información general: Visita nuestras oficinas o contáctanos a través de nuestros canales oficiales.</p>
+        </div>
+
+        <div id="academia" class="content-section">
+            <h1>Academia de Policía de Los Santos</h1>
+            <p>La Academia de Policía de Los Santos Network es el centro de formación donde preparamos a los futuros agentes de seguridad. Ofrecemos un programa integral que combina entrenamiento físico, formación teórica y práctica en campo.</p>
+
+            <h2>Programa de Formación</h2>
+            <p>Nuestro programa de formación tiene una duración de 6 meses e incluye:</p>
+            <div class="requirements">
+                <ul>
+                    <li>Fundamentos legales y derechos humanos</li>
+                    <li>Técnicas de intervención policial</li>
+                    <li>Entrenamiento físico y defensa personal</li>
+                    <li>Manejo de armas y tiro táctico</li>
+                    <li>Primeros auxilios y atención en crisis</li>
+                    <li>Comunicación y relaciones comunitarias</li>
+                    <li>Investigación criminal básica</li>
+                    <li>Ética y valores policiales</li>
+                </ul>
+            </div>
+
+            <h2>Requisitos de Ingreso</h2>
+            <div class="requirements">
+                <ul>
+                    <li>Edad mínima de 18 años</li>
+                    <li>Educación secundaria completa</li>
+                    <li>Certificado médico de aptitud física y mental</li>
+                    <li>Certificado de antecedentes penales</li>
+                    <li>Aprobar examen físico y psicológico</li>
+                    <li>Entrevista personal</li>
+                </ul>
+            </div>
+
+            <div id="video-container" style="display: none; margin: 2rem 0;">
+                <h2 style="text-align: center; color: #1e3c72;">📹 Video Informativo</h2>
+                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 10px;">
+                    <iframe id="academy-video" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <div class="academy-cta">
+                <h2>¿Listo para Unirte?</h2>
+                <p style="color: white; font-size: 1.1rem;">Forma parte de nuestra institución y contribuye a hacer de nuestra comunidad un lugar más seguro.</p>
+                
+                <div id="academy-postulation-status" style="margin: 1.5rem 0;">
+                    <p style="color: white; font-size: 1.2rem; font-weight: bold;">🟢 POSTULACIONES ABIERTAS</p>
+                </div>
+                
+                <button class="apply-btn" id="apply-btn-link" onclick="showApplicationForm()">SOLICITAR INGRESO A LA ACADEMIA</button>
+            </div>
+
+            <div id="application-form-container" style="display: none;">
+                <div class="form-container">
+                    <h2 style="color: #1e3c72; text-align: center;">📝 Formulario de Postulación</h2>
+                    <form id="application-form" onsubmit="submitApplication(event)">
+                        <div id="form-questions"></div>
+                        <button type="submit" class="btn-submit">✓ ENVIAR POSTULACIÓN</button>
+                        <button type="button" class="btn-cancel" onclick="hideApplicationForm()">✗ Cancelar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultados" class="content-section">
+            <h1>Resultados de Academia</h1>
+            
+            <div id="public-results">
+                <p style="text-align: center; color: #666; margin-bottom: 2rem;">
+                    Resultados oficiales de los exámenes de la Academia de Policía de Los Santos
+                </p>
+                <div class="results-list" id="results-display"></div>
+            </div>
+        </div>
+
+        <div id="acceder" class="content-section">
+            <h1>Panel de Administración</h1>
+            
+            <div id="login-screen">
+                <p style="text-align: center; color: #666; margin-bottom: 2rem;">Para acceder al panel de administración, ingresa la clave de acceso:</p>
+                <div class="login-box">
+                    <input type="password" id="password-input" placeholder="Clave de acceso" onkeypress="if(event.key==='Enter') checkPassword()">
+                    <button onclick="checkPassword()">Acceder</button>
+                    <p id="error-msg" class="error-message" style="display: none;">Clave incorrecta</p>
+                </div>
+            </div>
+
+            <div id="edit-panel" class="results-content">
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('postulaciones')">📋 Postulaciones</button>
+                    <button class="tab" onclick="showTab('resultados')">📊 Resultados</button>
+                    <button class="tab" onclick="showTab('historial')">📜 Historial</button>
+                    <button class="tab" onclick="showTab('preguntas')">❓ Preguntas</button>
+                    <button class="tab" onclick="showTab('video')">📹 Video</button>
+                </div>
+
+                <div id="postulaciones-tab" class="tab-content active">
+                    <h2>Gestión de Postulaciones</h2>
+                    
+                    <div class="admin-section">
+                        <h3>⏳ Pendientes (<span id="pending-count">0</span>)</h3>
+                        <div id="pending-apps"></div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>✅ Aprobadas (<span id="approved-count">0</span>)</h3>
+                        <div id="approved-apps"></div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>❌ Rechazadas (<span id="rejected-count">0</span>)</h3>
+                        <div id="rejected-apps"></div>
+                    </div>
+                </div>
+
+                <div id="resultados-tab" class="tab-content">
+                    <div class="postulation-controls">
+                        <h2 style="margin-bottom: 1rem;">Estado de Postulaciones</h2>
+                        <div id="postulation-status" class="postulation-status status-open">
+                            🟢 POSTULACIONES ABIERTAS
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <button class="toggle-btn btn-open" onclick="togglePostulaciones(true)">✓ Abrir Postulaciones</button>
+                            <button class="toggle-btn btn-close" onclick="togglePostulaciones(false)">✗ Cerrar Postulaciones</button>
+                        </div>
+                    </div>
+
+                    <div class="edit-controls">
+                        <h2>Panel de Edición de Resultados</h2>
+                        <p style="color: #666; font-style: italic;">Los resultados se gestionan automáticamente desde las postulaciones. Solo puedes editar las fechas.</p>
+                        
+                        <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; max-height: 400px; overflow-y: auto; border: 2px solid #ddd;">
+                            <h3 style="color: #1e3c72; margin-bottom: 1rem;">📋 Vista de Resultados</h3>
+                            <div id="results-preview"></div>
+                        </div>
+                        
+                        <div style="margin-top: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem;"><strong>Fecha del examen:</strong></label>
+                            <input type="text" id="exam-date" value="15 de Septiembre, 2025" style="width: 100%; padding: 0.5rem; border: 2px solid #ddd; border-radius: 5px;">
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem;"><strong>Próximo examen:</strong></label>
+                            <input type="text" id="next-exam" value="30 de Octubre, 2025" style="width: 100%; padding: 0.5rem; border: 2px solid #ddd; border-radius: 5px;">
+                        </div>
+                        <div style="margin-top: 1.5rem;">
+                            <button onclick="saveResults()">💾 Guardar Fechas</button>
+                            <button class="logout-btn" onclick="logout()">🚪 Cerrar Sesión</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="historial-tab" class="tab-content">
+                    <h2>Historial de Exámenes</h2>
+                    <p style="color: #666; margin-bottom: 2rem;">Historial completo de todos los candidatos evaluados</p>
+                    
+                    <div class="admin-section">
+                        <h3 style="color: #28a745;">✅ Aprobados (<span id="hist-approved-count">0</span>)</h3>
+                        <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-top: 1rem; max-height: 400px; overflow-y: auto;">
+                            <div id="hist-approved-list"></div>
+                        </div>
+                        <button onclick="clearHistorialAprobados()" class="btn btn-danger" style="margin-top: 1rem;">🗑️ Limpiar Historial Aprobados</button>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3 style="color: #dc3545;">❌ Suspendidos (<span id="hist-suspended-count">0</span>)</h3>
+                        <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-top: 1rem; max-height: 400px; overflow-y: auto;">
+                            <div id="hist-suspended-list"></div>
+                        </div>
+                        <button onclick="clearHistorialSuspendidos()" class="btn btn-danger" style="margin-top: 1rem;">🗑️ Limpiar Historial Suspendidos</button>
+                    </div>
+                </div>
+
+                <div id="preguntas-tab" class="tab-content">
+                    <h2>Gestión de Preguntas del Formulario</h2>
+                    
+                    <div class="admin-section">
+                        <h3>📌 Preguntas Fijas (No editables)</h3>
+                        <div id="fixed-questions"></div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>✏️ Preguntas Abiertas Personalizadas</h3>
+                        <div id="custom-questions"></div>
+                        
+                        <div style="margin-top: 1rem;">
+                            <input type="text" id="new-question" placeholder="Escribe una nueva pregunta..." style="width: 70%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-right: 0.5rem;">
+                            <button onclick="addCustomQuestion()" class="btn btn-success" style="padding: 0.8rem 1.5rem;">➕ Añadir Pregunta</button>
+                        </div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>📝 Preguntas Tipo Test (0,5 puntos cada una)</h3>
+                        <p style="color: #666; margin-bottom: 1rem; font-size: 0.95rem;">Cada pregunta tipo test correcta suma 0.5 puntos. Si está mal, no suma ni resta.</p>
+                        <div id="test-questions"></div>
+                        
+                        <div style="margin-top: 1.5rem; background: white; padding: 1.5rem; border-radius: 8px; border: 2px solid #2a5298;">
+                            <h4 style="margin-bottom: 1rem; color: #1e3c72;">➕ Nueva Pregunta Test</h4>
+                            <input type="text" id="new-test-question" placeholder="Pregunta..." style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-bottom: 0.5rem;">
+                            <input type="text" id="test-option1" placeholder="Opción 1" style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-bottom: 0.5rem;">
+                            <input type="text" id="test-option2" placeholder="Opción 2" style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-bottom: 0.5rem;">
+                            <input type="text" id="test-option3" placeholder="Opción 3" style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-bottom: 0.5rem;">
+                            <input type="text" id="test-option4" placeholder="Opción 4" style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-bottom: 0.5rem;">
+                            <select id="test-correct" style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-bottom: 1rem;">
+                                <option value="">Selecciona la respuesta correcta</option>
+                                <option value="0">Opción 1 es correcta</option>
+                                <option value="1">Opción 2 es correcta</option>
+                                <option value="2">Opción 3 es correcta</option>
+                                <option value="3">Opción 4 es correcta</option>
+                            </select>
+                            <button onclick="addTestQuestion()" class="btn btn-success" style="width: 100%;">➕ Añadir Pregunta Test</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="video-tab" class="tab-content">
+                    <h2>Configuración de Video</h2>
+                    <p style="color: #666; margin-bottom: 2rem;">Añade un video informativo en la página de Academia</p>
+                    
+                    <div class="admin-section">
+                        <h3>Estado del Video</h3>
+                        <div style="margin: 1rem 0;">
+                            <label style="display: flex; align-items: center; font-size: 1.1rem; cursor: pointer;">
+                                <input type="checkbox" id="video-enabled" onchange="toggleVideo()" style="width: 20px; height: 20px; margin-right: 1rem; cursor: pointer;">
+                                <span>Mostrar video en la página de Academia</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>URL del Video</h3>
+                        <p style="color: #666; font-size: 0.95rem; margin-bottom: 1rem;">Pega la URL de YouTube o Vimeo (ejemplo: https://www.youtube.com/embed/VIDEO_ID)</p>
+                        <input type="text" id="video-url" placeholder="https://www.youtube.com/embed/VIDEO_ID" style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-bottom: 1rem;">
+                        <button onclick="saveVideoUrl()" class="btn btn-success" style="padding: 0.8rem 2rem;">💾 Guardar URL</button>
+                        
+                        <div style="margin-top: 1.5rem; padding: 1rem; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 5px;">
+                            <strong>💡 Tip:</strong> Para obtener la URL de YouTube:
+                            <ol style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                                <li>Ve al video en YouTube</li>
+                                <li>Haz clic en "Compartir"</li>
+                                <li>Selecciona "Insertar"</li>
+                                <li>Copia solo la URL que aparece en src="..."</li>
+                            </ol>
+                        </div>
+
+                        <div id="video-preview" style="display: none; margin-top: 2rem;">
+                            <h4>Vista Previa:</h4>
+                            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 10px; margin-top: 1rem;">
+                                <iframe id="preview-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Contraseñas hasheadas con SHA-256
+        const ACCESS_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"; // admin123
+        const ADMIN_PASSWORD_HASH = "f12101c8686f57c3ae4319ffcb083ee55796587f4bcc1bff9099f2f2aac580dc"; // tote2025*
+        let isLoggedIn = false;
+        let isAdmin = false;
+        let appData = {
+            postulacionesAbiertas: true,
+            fixedQuestions: ["Nombre Discord","ID Usuario (Discord)","Edad OOC","Nombre IC","Edad IC","¿Tienes experiencia previa en el rol de la policía?","Indique donde ha roleado de policía y cuales fueron sus competencias","¿Por qué le interesaría pertenecer a la LSPD?"],
+            customQuestions: [],
+            testQuestions: [],
+            applications: [],
+            results: {entries: "",examDate: "15 de Septiembre, 2025",nextExam: "30 de Octubre, 2025"},
+            historial: {aprobados: [], suspendidos: []},
+            video: {enabled: false, url: ""}
+        };
+
+        window.addEventListener('DOMContentLoaded', function() {
+            const s = localStorage.getItem('lspd_full_data');
+            if (s) {
+                const loaded = JSON.parse(s);
+                // Preservar las preguntas test si existen
+                if (loaded.testQuestions) {
+                    appData.testQuestions = loaded.testQuestions;
+                }
+                if (loaded.customQuestions) {
+                    appData.customQuestions = loaded.customQuestions;
+                }
+                if (loaded.applications) {
+                    appData.applications = loaded.applications;
+                }
+                if (loaded.results) {
+                    appData.results = loaded.results;
+                }
+                if (loaded.historial) {
+                    appData.historial = loaded.historial;
+                }
+                if (loaded.postulacionesAbiertas !== undefined) {
+                    appData.postulacionesAbiertas = loaded.postulacionesAbiertas;
+                }
+                if (loaded.video) {
+                    appData.video = loaded.video;
+                }
+            }
+            updatePublicView();
+            updateAcademyStatus();
+            updateVideoDisplay();
+        });
+
+        function saveData() {
+            localStorage.setItem('lspd_full_data', JSON.stringify(appData));
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+            if (sectionId === 'acceder' && isLoggedIn) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('edit-panel').classList.add('active');
+                renderApplications();
+            }
+        }
+
+        async function hashPassword(password) {
+            const msgBuffer = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function checkPassword() {
+            const pwd = document.getElementById('password-input').value;
+            const pwdHash = await hashPassword(pwd);
+
+            if (pwdHash === ACCESS_PASSWORD_HASH || pwdHash === ADMIN_PASSWORD_HASH) {
+                isLoggedIn = true;
+                isAdmin = (pwdHash === ADMIN_PASSWORD_HASH);
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('edit-panel').classList.add('active');
+                document.getElementById('error-msg').style.display = 'none';
+                loadSavedResults();
+                updatePostulationStatus();
+                renderApplications();
+                renderFixedQuestions();
+                renderCustomQuestions();
+                renderHistorial();
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+                document.getElementById('password-input').value = '';
+            }
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            isAdmin = false;
+            showSection('acceder');
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('edit-panel').classList.remove('active');
+            document.getElementById('password-input').value = '';
+        }
+
+function showTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById(tab + '-tab').classList.add('active');
+    
+    // Renderizar preguntas test cuando se abre la pestaña
+    if (tab === 'preguntas') {
+        renderTestQuestions();
+    }
+    
+    // Actualizar video cuando se abre la pestaña
+    if (tab === 'video') {
+        updateVideoDisplay();
+    }
+}
+
+        function togglePostulaciones(estado) {
+            appData.postulacionesAbiertas = estado;
+            saveData();
+            updatePostulationStatus();
+            updatePublicView();
+            updateAcademyStatus();
+            alert(estado ? '✅ Postulaciones ABIERTAS' : '⚠️ Postulaciones CERRADAS');
+        }
+
+        function updateAcademyStatus() {
+            const msg = appData.postulacionesAbiertas ? '🟢 POSTULACIONES ABIERTAS' : '🔴 POSTULACIONES CERRADAS';
+            const color = appData.postulacionesAbiertas ? 'white' : '#ffcccc';
+            document.getElementById('academy-postulation-status').innerHTML = '<p style="color: '+color+'; font-size: 1.2rem; font-weight: bold;">'+msg+'</p>';
+            const btn = document.getElementById('apply-btn-link');
+            if (appData.postulacionesAbiertas) {
+                btn.classList.remove('disabled');
+                btn.style.pointerEvents = 'auto';
+            } else {
+                btn.classList.add('disabled');
+                btn.style.pointerEvents = 'none';
+            }
+        }
+
+        function updatePostulationStatus() {
+            const statusDiv = document.getElementById('postulation-status');
+            if (appData.postulacionesAbiertas) {
+                statusDiv.className = 'postulation-status status-open';
+                statusDiv.innerHTML = '🟢 POSTULACIONES ABIERTAS';
+            } else {
+                statusDiv.className = 'postulation-status status-closed';
+                statusDiv.innerHTML = '🔴 POSTULACIONES CERRADAS';
+            }
+        }
+
+        function saveResults() {
+            appData.results.examDate = document.getElementById('exam-date').value;
+            appData.results.nextExam = document.getElementById('next-exam').value;
+            saveData();
+            updatePublicView();
+            updateResultsPreview();
+            alert('✅ Fechas guardadas exitosamente');
+        }
+
+        function updatePublicView() {
+            const display = document.getElementById('results-display');
+            const entries = appData.results.entries.split('\n').filter(line => line.trim());
+            let html = '<h3 style="color: #1e3c72; margin-bottom: 1rem;">📋 Resultados del Último Examen</h3>';
+            html += '<p><strong>Fecha:</strong> ' + appData.results.examDate + '</p><div style="margin-top: 1.5rem;">';
+            entries.forEach(entry => {
+                const match = entry.match(/(.*?)\s*-\s*(\d+)/);
+                if (match) {
+                    const name = match[1].trim();
+                    const score = parseInt(match[2]);
+                    const passed = score >= 80;
+                    html += '<div class="result-entry"><span class="status-icon '+(passed?'approved':'failed')+'">'+(passed?'✓':'✗')+'</span><span class="result-name">'+name+'</span><span class="result-score '+(passed?'score-approved':'score-failed')+'">'+score+'/100</span></div>';
+                }
+            });
+            html += '</div>';
+            if (appData.postulacionesAbiertas) {
+                html += '<p style="margin-top: 1.5rem;"><strong>Próximo Examen:</strong> ' + appData.results.nextExam + '</p>';
+                html += '<p style="margin-top: 1rem; color: #28a745; font-size: 1.1rem; font-weight: bold;">🟢 POSTULACIONES ABIERTAS</p>';
+            } else {
+                html += '<p style="margin-top: 1.5rem; color: #dc3545; font-size: 1.1rem; font-weight: bold;">🔴 POSTULACIONES CERRADAS</p>';
+            }
+            html += '<p style="margin-top: 1rem; color: #666; font-size: 0.9rem;"><em>Nota: Se requiere una puntuación mínima de 80/100 para aprobar</em></p>';
+            display.innerHTML = html;
+        }
+
+        function updateResultsPreview() {
+            const preview = document.getElementById('results-preview');
+            if (!preview) return;
+            const entries = appData.results.entries.split('\n').filter(line => line.trim());
+            if (entries.length === 0) {
+                preview.innerHTML = '<p style="color: #999; text-align: center;">No hay resultados aún. Se añadirán automáticamente cuando apruebes o rechaces postulaciones.</p>';
+                return;
+            }
+            let html = '';
+            entries.forEach(entry => {
+                const match = entry.match(/(.*?)\s*-\s*(\d+)/);
+                if (match) {
+                    const name = match[1].trim();
+                    const score = parseInt(match[2]);
+                    const passed = score >= 80;
+                    html += '<div class="result-entry"><span class="status-icon '+(passed?'approved':'failed')+'">'+(passed?'✓':'✗')+'</span><span class="result-name">'+name+'</span><span class="result-score '+(passed?'score-approved':'score-failed')+'">'+score+'/100</span></div>';
+                }
+            });
+            preview.innerHTML = html;
+        }
+
+        function loadSavedResults() {
+            document.getElementById('exam-date').value = appData.results.examDate;
+            document.getElementById('next-exam').value = appData.results.nextExam;
+            updateResultsPreview();
+        }
+
+        function showApplicationForm() {
+            if (!appData.postulacionesAbiertas) {
+                alert('❌ Las postulaciones están cerradas');
+                return;
+            }
+            let html = '';
+            appData.fixedQuestions.forEach((q, i) => {
+                html += '<div class="form-group"><label>'+q+' *</label><input name="f'+i+'" required></div>';
+            });
+            appData.customQuestions.forEach((q, i) => {
+                html += '<div class="form-group"><label>'+q+'</label><textarea name="c'+i+'"></textarea></div>';
+            });
+            appData.testQuestions.forEach((q, i) => {
+                html += '<div class="form-group"><label>'+q.question+' *</label>';
+                q.options.forEach((opt, j) => {
+                    html += '<div style="margin: 0.5rem 0;"><label style="font-weight: normal; display: flex; align-items: center;"><input type="radio" name="t'+i+'" value="'+j+'" required style="margin-right: 0.5rem; width: auto;"> '+opt+'</label></div>';
+                });
+                html += '</div>';
+            });
+            document.getElementById('form-questions').innerHTML = html;
+            document.getElementById('application-form-container').style.display = 'block';
+        }
+
+        function hideApplicationForm() {
+            document.getElementById('application-form-container').style.display = 'none';
+            document.getElementById('application-form').reset();
+        }
+
+        function submitApplication(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const answers = {};
+            const testAnswers = {};
+            let testScore = 0;
+            
+            appData.fixedQuestions.forEach((q, i) => {
+                answers[q] = formData.get('f'+i);
+            });
+            appData.customQuestions.forEach((q, i) => {
+                answers[q] = formData.get('c'+i);
+            });
+            
+            appData.testQuestions.forEach((q, i) => {
+                const userAnswer = parseInt(formData.get('t'+i));
+                const isCorrect = userAnswer === q.correct;
+                testAnswers[q.question] = {
+                    userAnswer: q.options[userAnswer],
+                    correctAnswer: q.options[q.correct],
+                    isCorrect: isCorrect
+                };
+                if (isCorrect) {
+                    testScore += 0.5;
+                }
+            });
+            
+            appData.applications.push({
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                answers: answers,
+                testAnswers: testAnswers,
+                testScore: testScore,
+                status: 'pending'
+            });
+            saveData();
+            alert('✅ Postulación enviada exitosamente\n📊 Puntuación automática del test: '+testScore+' puntos');
+            hideApplicationForm();
+            e.target.reset();
+        }
+
+        function renderApplications() {
+            const pending = appData.applications.filter(a => a.status === 'pending');
+            const approved = appData.applications.filter(a => a.status === 'approved');
+            const rejected = appData.applications.filter(a => a.status === 'rejected');
+            document.getElementById('pending-count').textContent = pending.length;
+            document.getElementById('approved-count').textContent = approved.length;
+            document.getElementById('rejected-count').textContent = rejected.length;
+            document.getElementById('pending-apps').innerHTML = pending.length ? pending.map(renderApp).join('') : '<p>No hay postulaciones pendientes</p>';
+            document.getElementById('approved-apps').innerHTML = approved.length ? approved.map(renderApp).join('') : '<p>No hay postulaciones aprobadas</p>';
+            document.getElementById('rejected-apps').innerHTML = rejected.length ? rejected.map(renderApp).join('') : '<p>No hay postulaciones rechazadas</p>';
+            updateResultsPreview();
+        }
+
+        function renderApp(app) {
+            const badge = app.status === 'pending' ? 'status-pending' : app.status === 'approved' ? 'status-approved' : 'status-rejected';
+            const badgeText = app.status === 'pending' ? 'Pendiente' : app.status === 'approved' ? 'Aprobada' : 'Rechazada';
+            let html = '<div class="applicant-card"><div><span class="status-badge '+badge+'">'+badgeText+'</span> <small>'+app.date+'</small></div>';
+            
+            if (app.testScore !== undefined) {
+                const maxTestScore = appData.testQuestions.length * 0.5;
+                html += '<p style="margin-top:1rem; padding: 0.8rem; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 5px;"><strong>📊 Puntuación Test Automática:</strong> <span style="font-size:1.2rem;font-weight:bold;color:#1976d2;">'+app.testScore+' / '+maxTestScore+' puntos</span></p>';
+            }
+            
+            for (let [q, a] of Object.entries(app.answers)) {
+                html += '<p><strong>'+q+':</strong> '+a+'</p>';
+            }
+            
+            if (app.testAnswers) {
+                html += '<div style="margin-top: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 8px;"><h4 style="color: #1e3c72; margin-bottom: 0.5rem;">📝 Respuestas del Test:</h4>';
+                for (let [q, data] of Object.entries(app.testAnswers)) {
+                    const color = data.isCorrect ? '#28a745' : '#dc3545';
+                    const bgColor = data.isCorrect ? '#d4edda' : '#f8d7da';
+                    const icon = data.isCorrect ? '✓' : '✗';
+                    html += '<div style="margin: 0.5rem 0; padding: 0.8rem; background: '+bgColor+'; border-left: 4px solid '+color+'; border-radius: 4px;">';
+                    html += '<strong style="color:'+color+'">'+icon+' '+q+'</strong><br>';
+                    html += '<span style="color: #333; margin-top: 0.3rem; display: block;">Tu respuesta: <strong>'+data.userAnswer+'</strong></span>';
+                    if (!data.isCorrect) {
+                        html += '<span style="color: #28a745; margin-top: 0.3rem; display: block;">Correcta: <strong>'+data.correctAnswer+'</strong></span>';
+                    }
+                    html += '</div>';
+                }
+                html += '</div>';
+            }
+            
+            if (app.score !== undefined) {
+                html += '<p style="margin-top:1rem;"><strong>📊 Puntuación Final:</strong> <span style="font-size:1.2rem;font-weight:bold;color:'+(app.score>=80?'#28a745':'#dc3545')+'">'+app.score+'/100</span></p>';
+            }
+            html += '<div style="margin-top: 1rem;">';
+            if (app.status === 'pending') {
+                const maxScore = 100 - (app.testScore || 0);
+                html += '<p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;"><em>Puntuación test: '+(app.testScore || 0)+' puntos. Puedes asignar hasta '+maxScore.toFixed(1)+' puntos adicionales.</em></p>';
+                html += '<button onclick="approveApp('+app.id+')" class="btn btn-success">Aprobar</button>';
+                html += '<button onclick="rejectApp('+app.id+')" class="btn btn-danger">Rechazar</button>';
+            }
+            html += '<button onclick="deleteApp('+app.id+')" class="btn btn-secondary">Eliminar</button></div></div>';
+            return html;
+        }
+
+        function approveApp(id) {
+            const app = appData.applications.find(a => a.id === id);
+            if (!app) return;
+            
+            const testScore = app.testScore || 0;
+            const maxAdditional = 100 - testScore;
+            
+            const score = prompt('Puntuación test automática: '+testScore+' puntos\nPuntuación adicional (0-'+maxAdditional.toFixed(1)+') para aprobar (mínimo 80 total):');
+            if (score === null) return;
+            const notaAdicional = parseFloat(score);
+            
+            if (isNaN(notaAdicional) || notaAdicional < 0 || notaAdicional > maxAdditional) {
+                alert('❌ Error: La puntuación adicional debe estar entre 0 y '+maxAdditional.toFixed(1)+' puntos');
+                return;
+            }
+            
+            const notaFinal = testScore + notaAdicional;
+            
+            if (notaFinal < 80) {
+                alert('❌ Error: La puntuación total es '+notaFinal.toFixed(1)+', debe ser al menos 80 para aprobar');
+                return;
+            }
+            
+            app.status = 'approved';
+            app.score = notaFinal;
+            const nombreDiscord = app.answers['Nombre Discord'] || 'Sin nombre';
+            const idUsuario = app.answers['ID Usuario (Discord)'] || '';
+            const nombreIC = app.answers['Nombre IC'] || '';
+            const nombreCompleto = nombreIC || nombreDiscord;
+            addToResults(nombreCompleto, notaFinal);
+            addToHistorial(nombreDiscord, idUsuario, nombreIC, notaFinal, 'aprobado', app.date);
+            saveData();
+            renderApplications();
+            alert('✅ Postulación aprobada\nTest: '+testScore+' pts\nAdicional: '+notaAdicional+' pts\nTotal: '+notaFinal.toFixed(1)+'/100');
+        }
+
+        function rejectApp(id) {
+            const app = appData.applications.find(a => a.id === id);
+            if (!app) return;
+            
+            const testScore = app.testScore || 0;
+            const maxAdditional = 100 - testScore;
+            
+            const score = prompt('Puntuación test automática: '+testScore+' puntos\nPuntuación adicional (0-'+maxAdditional.toFixed(1)+') para rechazar (menor a 80):');
+            if (score === null) return;
+            const notaAdicional = parseFloat(score);
+            
+            if (isNaN(notaAdicional) || notaAdicional < 0 || notaAdicional > maxAdditional) {
+                alert('❌ Error: La puntuación adicional debe estar entre 0 y '+maxAdditional.toFixed(1)+' puntos');
+                return;
+            }
+            
+            const notaFinal = testScore + notaAdicional;
+            
+            if (notaFinal >= 80) {
+                alert('❌ Error: La puntuación total es '+notaFinal.toFixed(1)+', debe ser menor a 80 para rechazar');
+                return;
+            }
+            
+            app.status = 'rejected';
+            app.score = notaFinal;
+            const nombreDiscord = app.answers['Nombre Discord'] || 'Sin nombre';
+            const idUsuario = app.answers['ID Usuario (Discord)'] || '';
+            const nombreIC = app.answers['Nombre IC'] || '';
+            const nombreCompleto = nombreIC || nombreDiscord;
+            addToResults(nombreCompleto, notaFinal);
+            addToHistorial(nombreDiscord, idUsuario, nombreIC, notaFinal, 'suspendido', app.date);
+            saveData();
+            renderApplications();
+            alert('⚠️ Postulación rechazada\nTest: '+testScore+' pts\nAdicional: '+notaAdicional+' pts\nTotal: '+notaFinal.toFixed(1)+'/100');
+        }
+
+        function addToHistorial(nombreDiscord, idUsuario, nombreIC, puntuacion, estado, fecha) {
+            const registro = {
+                nombreDiscord: nombreDiscord,
+                idUsuario: idUsuario,
+                nombreIC: nombreIC,
+                puntuacion: puntuacion,
+                fecha: fecha,
+                fechaEvaluacion: new Date().toLocaleString()
+            };
+            
+            if (estado === 'aprobado') {
+                const exists = appData.historial.aprobados.some(h => h.idUsuario === idUsuario || h.nombreDiscord === nombreDiscord);
+                if (!exists) {
+                    appData.historial.aprobados.push(registro);
+                }
+            } else {
+                // Para suspendidos, siempre añadir (para contar intentos)
+                appData.historial.suspendidos.push(registro);
+            }
+            saveData();
+            renderHistorial();
+        }
+
+        function addToResults(nombre, puntuacion) {
+            const linea = nombre + ' - ' + puntuacion;
+            const lines = appData.results.entries.split('\n').filter(l => l.trim());
+            const exists = lines.some(l => l.startsWith(nombre + ' -'));
+            if (!exists) {
+                lines.push(linea);
+                appData.results.entries = lines.join('\n');
+                saveData();
+                updatePublicView();
+                if (isLoggedIn) {
+                    loadSavedResults();
+                }
+            }
+        }
+
+        function deleteApp(id) {
+            if (confirm('¿Eliminar esta postulación?')) {
+                const app = appData.applications.find(a => a.id === id);
+                if (app) {
+                    const nombreIC = app.answers['Nombre IC'] || app.answers['Nombre Discord'] || 'Sin nombre';
+                    removeFromResults(nombreIC);
+                }
+                appData.applications = appData.applications.filter(a => a.id !== id);
+                saveData();
+                renderApplications();
+            }
+        }
+
+        function removeFromResults(nombre) {
+            const lines = appData.results.entries.split('\n').filter(l => l.trim());
+            const newLines = lines.filter(l => !l.startsWith(nombre + ' -'));
+            appData.results.entries = newLines.join('\n');
+            saveData();
+            updatePublicView();
+            if (isLoggedIn) {
+                loadSavedResults();
+            }
+        }
+
+        function renderFixedQuestions() {
+            document.getElementById('fixed-questions').innerHTML = appData.fixedQuestions.map(q => 
+                '<div class="question-item fixed">'+q+'</div>'
+            ).join('');
+        }
+
+        function renderCustomQuestions() {
+            document.getElementById('custom-questions').innerHTML = appData.customQuestions.map((q, i) => 
+                '<div class="question-item"><span>'+q+'</span><button onclick="deleteQuestion('+i+')" class="btn btn-danger">Eliminar</button></div>'
+            ).join('');
+        }
+
+        function addCustomQuestion() {
+            const q = document.getElementById('new-question').value.trim();
+            if (q) {
+                appData.customQuestions.push(q);
+                saveData();
+                renderCustomQuestions();
+                document.getElementById('new-question').value = '';
+            }
+        }
+
+        function deleteQuestion(i) {
+            if (confirm('¿Eliminar esta pregunta?')) {
+                appData.customQuestions.splice(i, 1);
+                saveData();
+                renderCustomQuestions();
+            }
+        }
+
+        function renderTestQuestions() {
+            const container = document.getElementById('test-questions');
+            if (!container) return;
+            if (appData.testQuestions.length === 0) {
+                container.innerHTML = '<p style="color: #999;">No hay preguntas test creadas</p>';
+                return;
+            }
+            container.innerHTML = appData.testQuestions.map((q, i) => {
+                let html = '<div class="question-item" style="flex-direction: column; align-items: flex-start;">';
+                html += '<div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">';
+                html += '<strong>'+q.question+'</strong>';
+                html += '<button onclick="deleteTestQuestion('+i+')" class="btn btn-danger">Eliminar</button>';
+                html += '</div>';
+                html += '<div style="margin-left: 1rem; font-size: 0.9rem;">';
+                q.options.forEach((opt, j) => {
+                    const isCorrect = j === q.correct;
+                    html += '<div style="color: '+(isCorrect?'#28a745':'#666')+';">'+(isCorrect?'✓ ':'○ ')+opt+'</div>';
+                });
+                html += '</div></div>';
+                return html;
+            }).join('');
+        }
+
+        function addTestQuestion() {
+            const question = document.getElementById('new-test-question').value.trim();
+            const opt1 = document.getElementById('test-option1').value.trim();
+            const opt2 = document.getElementById('test-option2').value.trim();
+            const opt3 = document.getElementById('test-option3').value.trim();
+            const opt4 = document.getElementById('test-option4').value.trim();
+            const correct = document.getElementById('test-correct').value;
+            
+            if (!question || !opt1 || !opt2 || !opt3 || !opt4 || correct === '') {
+                alert('❌ Por favor completa todos los campos');
+                return;
+            }
+            
+            appData.testQuestions.push({
+                question: question,
+                options: [opt1, opt2, opt3, opt4],
+                correct: parseInt(correct)
+            });
+            
+            saveData();
+            renderTestQuestions();
+            
+            document.getElementById('new-test-question').value = '';
+            document.getElementById('test-option1').value = '';
+            document.getElementById('test-option2').value = '';
+            document.getElementById('test-option3').value = '';
+            document.getElementById('test-option4').value = '';
+            document.getElementById('test-correct').value = '';
+            
+            alert('✅ Pregunta test añadida (vale 0.5 puntos)');
+        }
+
+        function deleteTestQuestion(i) {
+            if (confirm('¿Eliminar esta pregunta test?')) {
+                appData.testQuestions.splice(i, 1);
+                saveData();
+                renderTestQuestions();
+            }
+        }
+
+        function renderHistorial() {
+            const aprovList = document.getElementById('hist-approved-list');
+            const suspList = document.getElementById('hist-suspended-list');
+            const aprovCount = document.getElementById('hist-approved-count');
+            const suspCount = document.getElementById('hist-suspended-count');
+            
+            if (!aprovList || !suspList) return;
+            
+            aprovCount.textContent = appData.historial.aprobados.length;
+            
+            if (appData.historial.aprobados.length === 0) {
+                aprovList.innerHTML = '<p style="color: #999; text-align: center;">No hay registros de aprobados</p>';
+            } else {
+                aprovList.innerHTML = appData.historial.aprobados.map(h => {
+                    const displayName = h.nombreDiscord || h.nombre || 'Sin nombre';
+                    const displayID = h.idUsuario ? ' | ID: ' + h.idUsuario : '';
+                    const displayIC = h.nombreIC ? ' | IC: ' + h.nombreIC : '';
+                    return '<div class="result-entry" style="background: #d4edda; border-left: 4px solid #28a745; flex-direction: column; align-items: flex-start;"><div style="display: flex; align-items: center; width: 100%;"><span class="status-icon approved">✓</span><div style="flex: 1;"><strong>'+displayName+'</strong><br><small style="color: #666;">'+displayID+displayIC+'</small></div><span class="result-score score-approved">'+h.puntuacion+'/100</span></div><small style="color: #666; margin-top: 0.5rem;">'+h.fechaEvaluacion+'</small></div>';
+                }).join('');
+            }
+            
+            // Agrupar suspendidos por ID de usuario o nombre de Discord
+            const suspendidosAgrupados = {};
+            appData.historial.suspendidos.forEach(h => {
+                const key = h.idUsuario || h.nombreDiscord || h.nombre;
+                if (!suspendidosAgrupados[key]) {
+                    suspendidosAgrupados[key] = [];
+                }
+                suspendidosAgrupados[key].push(h);
+            });
+            
+            const totalSuspendidos = Object.keys(suspendidosAgrupados).length;
+            suspCount.textContent = totalSuspendidos;
+            
+            if (totalSuspendidos === 0) {
+                suspList.innerHTML = '<p style="color: #999; text-align: center;">No hay registros de suspendidos</p>';
+            } else {
+                let html = '';
+                for (let key in suspendidosAgrupados) {
+                    const intentos = suspendidosAgrupados[key];
+                    const cantidadIntentos = intentos.length;
+                    const ultimoIntento = intentos[intentos.length - 1];
+                    const displayName = ultimoIntento.nombreDiscord || ultimoIntento.nombre || 'Sin nombre';
+                    const displayID = ultimoIntento.idUsuario ? ' | ID: ' + ultimoIntento.idUsuario : '';
+                    const displayIC = ultimoIntento.nombreIC ? ' | IC: ' + ultimoIntento.nombreIC : '';
+                    
+                    html += '<div class="result-entry" style="background: #f8d7da; border-left: 4px solid #dc3545; flex-direction: column; align-items: flex-start;">';
+                    html += '<div style="display: flex; align-items: center; width: 100%;">';
+                    html += '<span class="status-icon failed">✗</span>';
+                    html += '<div style="flex: 1;"><strong>'+displayName+'</strong><br><small style="color: #666;">'+displayID+displayIC+'</small></div>';
+                    html += '<span class="result-score score-failed">'+ultimoIntento.puntuacion+'/100</span>';
+                    html += '<span style="background: #721c24; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.9rem; font-weight: bold; margin-left: 0.5rem;">'+cantidadIntentos+' intento'+(cantidadIntentos>1?'s':'')+'</span>';
+                    html += '</div>';
+                    html += '<small style="color: #666; margin-top: 0.5rem;">Último intento: '+ultimoIntento.fechaEvaluacion+'</small>';
+                    html += '</div>';
+                }
+                suspList.innerHTML = html;
+            }
+        }
+
+        function clearHistorialAprobados() {
+            if (!isAdmin) {
+                alert('❌ No tienes permisos para eliminar el historial. Se requiere contraseña de administrador.');
+                return;
+            }
+            if (confirm('¿Estás seguro de limpiar todo el historial de aprobados?')) {
+                appData.historial.aprobados = [];
+                saveData();
+                renderHistorial();
+                alert('✅ Historial de aprobados limpiado');
+            }
+        }
+
+        function clearHistorialSuspendidos() {
+            if (!isAdmin) {
+                alert('❌ No tienes permisos para eliminar el historial. Se requiere contraseña de administrador.');
+                return;
+            }
+            if (confirm('¿Estás seguro de limpiar todo el historial de suspendidos?')) {
+                appData.historial.suspendidos = [];
+                saveData();
+                renderHistorial();
+                alert('✅ Historial de suspendidos limpiado');
+            }
+        }
+        function toggleVideo() {
+    appData.video.enabled = document.getElementById('video-enabled').checked;
+    saveData();
+    updateVideoDisplay();
+}
+
+function toggleVideo() {
+    appData.video.enabled = document.getElementById('video-enabled').checked;
+    saveData();
+    updateVideoDisplay();
+}
+
+function saveVideoUrl() {
+    const url = document.getElementById('video-url').value.trim();
+    if (!url) {
+        appData.video.url = '';
+        saveData();
+        updateVideoDisplay();
+        document.getElementById('video-preview').style.display = 'none';
+        alert('✅ Video eliminado');
+        return;
+    }
+    
+    // Convertir URL de YouTube a formato embed
+    let embedUrl = url;
+    
+    // YouTube - diferentes formatos
+    if (url.includes('youtube.com/watch')) {
+        const videoId = url.split('v=')[1]?.split('&')[0];
+        if (videoId) {
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+    } else if (url.includes('youtu.be/')) {
+        const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+        if (videoId) {
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+    } else if (url.includes('youtube.com/shorts/')) {
+        const videoId = url.split('shorts/')[1]?.split('?')[0];
+        if (videoId) {
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+    }
+    // Vimeo
+    else if (url.includes('vimeo.com/') && !url.includes('/video/')) {
+        const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
+        if (videoId) {
+            embedUrl = `https://player.vimeo.com/video/${videoId}`;
+        }
+    }
+    
+    appData.video.url = embedUrl;
+    saveData();
+    updateVideoDisplay();
+    
+    // Mostrar vista previa
+    document.getElementById('video-preview').style.display = 'block';
+    document.getElementById('preview-iframe').src = embedUrl;
+    
+    alert('✅ URL del video guardada y convertida al formato correcto');
+}
+
+function updateVideoDisplay() {
+    const videoContainer = document.getElementById('video-container');
+    const academyVideo = document.getElementById('academy-video');
+    const videoEnabled = document.getElementById('video-enabled');
+    const videoUrlInput = document.getElementById('video-url');
+    
+    if (videoContainer && academyVideo) {
+        if (appData.video.enabled && appData.video.url) {
+            videoContainer.style.display = 'block';
+            academyVideo.src = appData.video.url;
+        } else {
+            videoContainer.style.display = 'none';
+            academyVideo.src = '';
+        }
+    }
+    
+    // Actualizar controles del admin si existen
+    if (videoEnabled) {
+        videoEnabled.checked = appData.video.enabled;
+    }
+    if (videoUrlInput) {
+        videoUrlInput.value = appData.video.url || '';
+    }
+}
+    </script>
+</body>
+</html>
