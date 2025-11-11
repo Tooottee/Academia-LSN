@@ -254,17 +254,6 @@
             margin-bottom: 2rem;
         }
 
-        .edit-controls textarea {
-            width: 100%;
-            min-height: 200px;
-            padding: 1rem;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-family: inherit;
-            font-size: 1rem;
-            margin: 1rem 0;
-        }
-
         .edit-controls button {
             background: #28a745;
             color: white;
@@ -353,19 +342,6 @@
             padding: 2rem;
             border-radius: 10px;
             margin-top: 2rem;
-        }
-
-        .result-item {
-            background: white;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border-radius: 8px;
-            border-left: 4px solid #2a5298;
-        }
-
-        .result-item h3 {
-            color: #1e3c72;
-            margin-bottom: 0.5rem;
         }
 
         .result-entry {
@@ -597,6 +573,12 @@
             color: white;
         }
 
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 padding: 0 1rem;
@@ -730,7 +712,9 @@
                 <p style="text-align: center; color: #666; margin-bottom: 2rem;">
                     Resultados oficiales de los exámenes de la Academia de Policía de Los Santos
                 </p>
-                <div class="results-list" id="results-display"></div>
+                <div class="results-list" id="results-display">
+                    <div class="loading">⏳ Cargando resultados...</div>
+                </div>
             </div>
         </div>
 
@@ -915,71 +899,162 @@
         </div>
     </div>
 
-    <script>
-        // Contraseñas hasheadas con SHA-256
-        const ACCESS_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"; // admin123
-        const ADMIN_PASSWORD_HASH = "f12101c8686f57c3ae4319ffcb083ee55796587f4bcc1bff9099f2f2aac580dc"; // tote2025*
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, get, onValue, push, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // IMPORTANTE: Reemplaza esto con tu configuración de Firebase
+        // Ve a Firebase Console > Project Settings > General > Your apps > SDK setup and configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyAM949rVZYych3E7htCDfa4b-xnWeV1SXk",
+          authDomain: "academia-lsn.firebaseapp.com",
+          databaseURL: "https://academia-lsn-default-rtdb.europe-west1.firebasedatabase.app",
+          projectId: "academia-lsn",
+          storageBucket: "academia-lsn.firebasestorage.app",
+          messagingSenderId: "351034126709",
+          appId: "1:351034126709:web:9102c360a49e3e9096633c"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Variables globales
+        const ACCESS_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
+        const ADMIN_PASSWORD_HASH = "f12101c8686f57c3ae4319ffcb083ee55796587f4bcc1bff9099f2f2aac580dc";
         let isLoggedIn = false;
         let isAdmin = false;
-        let appData = {
+
+        // Estructura de datos inicial
+        const defaultData = {
             postulacionesAbiertas: true,
             fixedQuestions: ["Nombre Discord","ID Usuario (Discord)","Edad OOC","Nombre IC","Edad IC","¿Tienes experiencia previa en el rol de la policía?","Indique donde ha roleado de policía y cuales fueron sus competencias","¿Por qué le interesaría pertenecer a la LSPD?"],
             customQuestions: [],
             testQuestions: [],
-            applications: [],
-            results: {entries: "",examDate: "15 de Septiembre, 2025",nextExam: "30 de Octubre, 2025"},
-            historial: {aprobados: [], suspendidos: []},
-            video: {enabled: false, url: ""}
+            applications: {},
+            results: {
+                entries: "",
+                examDate: "15 de Septiembre, 2025",
+                nextExam: "30 de Octubre, 2025"
+            },
+            historial: {
+                aprobados: {},
+                suspendidos: {}
+            },
+            video: {
+                enabled: false,
+                url: ""
+            }
         };
 
-        window.addEventListener('DOMContentLoaded', function() {
-            const s = localStorage.getItem('lspd_full_data');
-            if (s) {
-                const loaded = JSON.parse(s);
-                // Preservar las preguntas test si existen
-                if (loaded.testQuestions) {
-                    appData.testQuestions = loaded.testQuestions;
-                }
-                if (loaded.customQuestions) {
-                    appData.customQuestions = loaded.customQuestions;
-                }
-                if (loaded.applications) {
-                    appData.applications = loaded.applications;
-                }
-                if (loaded.results) {
-                    appData.results = loaded.results;
-                }
-                if (loaded.historial) {
-                    appData.historial = loaded.historial;
-                }
-                if (loaded.postulacionesAbiertas !== undefined) {
-                    appData.postulacionesAbiertas = loaded.postulacionesAbiertas;
-                }
-                if (loaded.video) {
-                    appData.video = loaded.video;
-                }
+        // Inicializar base de datos con datos por defecto si no existe
+        async function initializeDatabase() {
+            const dbRef = ref(database, '/');
+            const snapshot = await get(dbRef);
+            if (!snapshot.exists()) {
+                await set(dbRef, defaultData);
             }
-            updatePublicView();
-            updateAcademyStatus();
-            updateVideoDisplay();
-        });
-
-        function saveData() {
-            localStorage.setItem('lspd_full_data', JSON.stringify(appData));
         }
 
-        function showSection(sectionId) {
+        // Escuchar cambios en tiempo real
+        function setupRealtimeListeners() {
+            onValue(ref(database, 'postulacionesAbiertas'), (snapshot) => {
+                const value = snapshot.val();
+                if (value !== null) {
+                    updateAcademyStatus(value);
+                    if (isLoggedIn) {
+                        updatePostulationStatus(value);
+                    }
+                }
+            });
+
+            onValue(ref(database, 'results'), (snapshot) => {
+                const results = snapshot.val();
+                if (results) {
+                    updatePublicView(results);
+                    if (isLoggedIn) {
+                        document.getElementById('exam-date').value = results.examDate || "";
+                        document.getElementById('next-exam').value = results.nextExam || "";
+                        updateResultsPreview(results);
+                    }
+                }
+            });
+
+            onValue(ref(database, 'applications'), (snapshot) => {
+                if (isLoggedIn) {
+                    const apps = snapshot.val() || {};
+                    renderApplications(apps);
+                }
+            });
+
+            onValue(ref(database, 'customQuestions'), (snapshot) => {
+                if (isLoggedIn) {
+                    const questions = snapshot.val() || [];
+                    renderCustomQuestions(questions);
+                }
+            });
+
+            onValue(ref(database, 'testQuestions'), (snapshot) => {
+                const questions = snapshot.val() || [];
+                if (isLoggedIn) {
+                    renderTestQuestions(questions);
+                }
+            });
+
+            onValue(ref(database, 'fixedQuestions'), (snapshot) => {
+                if (isLoggedIn) {
+                    const questions = snapshot.val() || [];
+                    renderFixedQuestions(questions);
+                }
+            });
+
+            onValue(ref(database, 'historial'), (snapshot) => {
+                if (isLoggedIn) {
+                    const historial = snapshot.val() || { aprobados: {}, suspendidos: {} };
+                    renderHistorial(historial);
+                }
+            });
+
+            onValue(ref(database, 'video'), (snapshot) => {
+                const video = snapshot.val() || { enabled: false, url: "" };
+                updateVideoDisplay(video);
+            });
+        }
+
+        // Funciones de navegación
+        window.showSection = function(sectionId) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
             event.target.classList.add('active');
+            
             if (sectionId === 'acceder' && isLoggedIn) {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('edit-panel').classList.add('active');
-                renderApplications();
             }
-        }
+        };
 
+        window.showTab = async function(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + '-tab').classList.add('active');
+            
+            if (tab === 'preguntas') {
+                const snapshot = await get(ref(database, 'testQuestions'));
+                const questions = snapshot.val() || [];
+                renderTestQuestions(questions);
+            }
+            
+            if (tab === 'video') {
+                const snapshot = await get(ref(database, 'video'));
+                const video = snapshot.val() || { enabled: false, url: "" };
+                updateVideoDisplay(video);
+            }
+        };
+
+        // Función de hash de contraseña
         async function hashPassword(password) {
             const msgBuffer = new TextEncoder().encode(password);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -987,7 +1062,8 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        async function checkPassword() {
+        // Login
+        window.checkPassword = async function() {
             const pwd = document.getElementById('password-input').value;
             const pwdHash = await hashPassword(pwd);
 
@@ -997,59 +1073,42 @@
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('edit-panel').classList.add('active');
                 document.getElementById('error-msg').style.display = 'none';
-                loadSavedResults();
-                updatePostulationStatus();
-                renderApplications();
-                renderFixedQuestions();
-                renderCustomQuestions();
-                renderHistorial();
+                
+                const snapshot = await get(ref(database, '/'));
+                const data = snapshot.val();
+                
+                if (data.results) {
+                    document.getElementById('exam-date').value = data.results.examDate || "";
+                    document.getElementById('next-exam').value = data.results.nextExam || "";
+                    updateResultsPreview(data.results);
+                }
             } else {
                 document.getElementById('error-msg').style.display = 'block';
                 document.getElementById('password-input').value = '';
             }
-        }
+        };
 
-        function logout() {
+        window.logout = function() {
             isLoggedIn = false;
             isAdmin = false;
-            showSection('acceder');
+            window.showSection('acceder');
             document.getElementById('login-screen').style.display = 'block';
             document.getElementById('edit-panel').classList.remove('active');
             document.getElementById('password-input').value = '';
-        }
+        };
 
-function showTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    event.target.classList.add('active');
-    document.getElementById(tab + '-tab').classList.add('active');
-    
-    // Renderizar preguntas test cuando se abre la pestaña
-    if (tab === 'preguntas') {
-        renderTestQuestions();
-    }
-    
-    // Actualizar video cuando se abre la pestaña
-    if (tab === 'video') {
-        updateVideoDisplay();
-    }
-}
-
-        function togglePostulaciones(estado) {
-            appData.postulacionesAbiertas = estado;
-            saveData();
-            updatePostulationStatus();
-            updatePublicView();
-            updateAcademyStatus();
+        // Postulaciones
+        window.togglePostulaciones = async function(estado) {
+            await set(ref(database, 'postulacionesAbiertas'), estado);
             alert(estado ? '✅ Postulaciones ABIERTAS' : '⚠️ Postulaciones CERRADAS');
-        }
+        };
 
-        function updateAcademyStatus() {
-            const msg = appData.postulacionesAbiertas ? '🟢 POSTULACIONES ABIERTAS' : '🔴 POSTULACIONES CERRADAS';
-            const color = appData.postulacionesAbiertas ? 'white' : '#ffcccc';
+        function updateAcademyStatus(postulacionesAbiertas) {
+            const msg = postulacionesAbiertas ? '🟢 POSTULACIONES ABIERTAS' : '🔴 POSTULACIONES CERRADAS';
+            const color = postulacionesAbiertas ? 'white' : '#ffcccc';
             document.getElementById('academy-postulation-status').innerHTML = '<p style="color: '+color+'; font-size: 1.2rem; font-weight: bold;">'+msg+'</p>';
             const btn = document.getElementById('apply-btn-link');
-            if (appData.postulacionesAbiertas) {
+            if (postulacionesAbiertas) {
                 btn.classList.remove('disabled');
                 btn.style.pointerEvents = 'auto';
             } else {
@@ -1058,9 +1117,9 @@ function showTab(tab) {
             }
         }
 
-        function updatePostulationStatus() {
+        function updatePostulationStatus(postulacionesAbiertas) {
             const statusDiv = document.getElementById('postulation-status');
-            if (appData.postulacionesAbiertas) {
+            if (postulacionesAbiertas) {
                 statusDiv.className = 'postulation-status status-open';
                 statusDiv.innerHTML = '🟢 POSTULACIONES ABIERTAS';
             } else {
@@ -1069,54 +1128,70 @@ function showTab(tab) {
             }
         }
 
-        function saveResults() {
-            appData.results.examDate = document.getElementById('exam-date').value;
-            appData.results.nextExam = document.getElementById('next-exam').value;
-            saveData();
-            updatePublicView();
-            updateResultsPreview();
+        // Resultados
+        window.saveResults = async function() {
+            const examDate = document.getElementById('exam-date').value;
+            const nextExam = document.getElementById('next-exam').value;
+            
+            const snapshot = await get(ref(database, 'results/entries'));
+            const entries = snapshot.val() || "";
+            
+            await set(ref(database, 'results'), {
+                entries: entries,
+                examDate: examDate,
+                nextExam: nextExam
+            });
+            
             alert('✅ Fechas guardadas exitosamente');
-        }
+        };
 
-        function updatePublicView() {
+        function updatePublicView(results) {
             const display = document.getElementById('results-display');
-            const entries = appData.results.entries.split('\n').filter(line => line.trim());
+            const entries = (results.entries || "").split('\n').filter(line => line.trim());
             let html = '<h3 style="color: #1e3c72; margin-bottom: 1rem;">📋 Resultados del Último Examen</h3>';
-            html += '<p><strong>Fecha:</strong> ' + appData.results.examDate + '</p><div style="margin-top: 1.5rem;">';
+            html += '<p><strong>Fecha:</strong> ' + (results.examDate || "") + '</p><div style="margin-top: 1.5rem;">';
+            
             entries.forEach(entry => {
-                const match = entry.match(/(.*?)\s*-\s*(\d+)/);
+                const match = entry.match(/(.*?)\s*-\s*(\d+\.?\d*)/);
                 if (match) {
                     const name = match[1].trim();
-                    const score = parseInt(match[2]);
+                    const score = parseFloat(match[2]);
                     const passed = score >= 80;
                     html += '<div class="result-entry"><span class="status-icon '+(passed?'approved':'failed')+'">'+(passed?'✓':'✗')+'</span><span class="result-name">'+name+'</span><span class="result-score '+(passed?'score-approved':'score-failed')+'">'+score+'/100</span></div>';
                 }
             });
+            
             html += '</div>';
-            if (appData.postulacionesAbiertas) {
-                html += '<p style="margin-top: 1.5rem;"><strong>Próximo Examen:</strong> ' + appData.results.nextExam + '</p>';
-                html += '<p style="margin-top: 1rem; color: #28a745; font-size: 1.1rem; font-weight: bold;">🟢 POSTULACIONES ABIERTAS</p>';
-            } else {
-                html += '<p style="margin-top: 1.5rem; color: #dc3545; font-size: 1.1rem; font-weight: bold;">🔴 POSTULACIONES CERRADAS</p>';
-            }
-            html += '<p style="margin-top: 1rem; color: #666; font-size: 0.9rem;"><em>Nota: Se requiere una puntuación mínima de 80/100 para aprobar</em></p>';
-            display.innerHTML = html;
+            
+            get(ref(database, 'postulacionesAbiertas')).then(snapshot => {
+                const postulacionesAbiertas = snapshot.val();
+                if (postulacionesAbiertas) {
+                    html += '<p style="margin-top: 1.5rem;"><strong>Próximo Examen:</strong> ' + (results.nextExam || "") + '</p>';
+                    html += '<p style="margin-top: 1rem; color: #28a745; font-size: 1.1rem; font-weight: bold;">🟢 POSTULACIONES ABIERTAS</p>';
+                } else {
+                    html += '<p style="margin-top: 1.5rem; color: #dc3545; font-size: 1.1rem; font-weight: bold;">🔴 POSTULACIONES CERRADAS</p>';
+                }
+                html += '<p style="margin-top: 1rem; color: #666; font-size: 0.9rem;"><em>Nota: Se requiere una puntuación mínima de 80/100 para aprobar</em></p>';
+                display.innerHTML = html;
+            });
         }
 
-        function updateResultsPreview() {
+        function updateResultsPreview(results) {
             const preview = document.getElementById('results-preview');
             if (!preview) return;
-            const entries = appData.results.entries.split('\n').filter(line => line.trim());
+            
+            const entries = (results.entries || "").split('\n').filter(line => line.trim());
             if (entries.length === 0) {
                 preview.innerHTML = '<p style="color: #999; text-align: center;">No hay resultados aún. Se añadirán automáticamente cuando apruebes o rechaces postulaciones.</p>';
                 return;
             }
+            
             let html = '';
             entries.forEach(entry => {
-                const match = entry.match(/(.*?)\s*-\s*(\d+)/);
+                const match = entry.match(/(.*?)\s*-\s*(\d+\.?\d*)/);
                 if (match) {
                     const name = match[1].trim();
-                    const score = parseInt(match[2]);
+                    const score = parseFloat(match[2]);
                     const passed = score >= 80;
                     html += '<div class="result-entry"><span class="status-icon '+(passed?'approved':'failed')+'">'+(passed?'✓':'✗')+'</span><span class="result-name">'+name+'</span><span class="result-score '+(passed?'score-approved':'score-failed')+'">'+score+'/100</span></div>';
                 }
@@ -1124,55 +1199,70 @@ function showTab(tab) {
             preview.innerHTML = html;
         }
 
-        function loadSavedResults() {
-            document.getElementById('exam-date').value = appData.results.examDate;
-            document.getElementById('next-exam').value = appData.results.nextExam;
-            updateResultsPreview();
-        }
-
-        function showApplicationForm() {
-            if (!appData.postulacionesAbiertas) {
+        // Formulario de postulación
+        window.showApplicationForm = async function() {
+            const snapshot = await get(ref(database, 'postulacionesAbiertas'));
+            if (!snapshot.val()) {
                 alert('❌ Las postulaciones están cerradas');
                 return;
             }
+            
+            const fixedQuestionsSnap = await get(ref(database, 'fixedQuestions'));
+            const customQuestionsSnap = await get(ref(database, 'customQuestions'));
+            const testQuestionsSnap = await get(ref(database, 'testQuestions'));
+            
+            const fixedQuestions = fixedQuestionsSnap.val() || [];
+            const customQuestions = customQuestionsSnap.val() || [];
+            const testQuestions = testQuestionsSnap.val() || [];
+            
             let html = '';
-            appData.fixedQuestions.forEach((q, i) => {
+            fixedQuestions.forEach((q, i) => {
                 html += '<div class="form-group"><label>'+q+' *</label><input name="f'+i+'" required></div>';
             });
-            appData.customQuestions.forEach((q, i) => {
+            customQuestions.forEach((q, i) => {
                 html += '<div class="form-group"><label>'+q+'</label><textarea name="c'+i+'"></textarea></div>';
             });
-            appData.testQuestions.forEach((q, i) => {
+            testQuestions.forEach((q, i) => {
                 html += '<div class="form-group"><label>'+q.question+' *</label>';
                 q.options.forEach((opt, j) => {
                     html += '<div style="margin: 0.5rem 0;"><label style="font-weight: normal; display: flex; align-items: center;"><input type="radio" name="t'+i+'" value="'+j+'" required style="margin-right: 0.5rem; width: auto;"> '+opt+'</label></div>';
                 });
                 html += '</div>';
             });
+            
             document.getElementById('form-questions').innerHTML = html;
             document.getElementById('application-form-container').style.display = 'block';
-        }
+        };
 
-        function hideApplicationForm() {
+        window.hideApplicationForm = function() {
             document.getElementById('application-form-container').style.display = 'none';
             document.getElementById('application-form').reset();
-        }
+        };
 
-        function submitApplication(e) {
+        window.submitApplication = async function(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
+            
+            const fixedQuestionsSnap = await get(ref(database, 'fixedQuestions'));
+            const customQuestionsSnap = await get(ref(database, 'customQuestions'));
+            const testQuestionsSnap = await get(ref(database, 'testQuestions'));
+            
+            const fixedQuestions = fixedQuestionsSnap.val() || [];
+            const customQuestions = customQuestionsSnap.val() || [];
+            const testQuestions = testQuestionsSnap.val() || [];
+            
             const answers = {};
             const testAnswers = {};
             let testScore = 0;
             
-            appData.fixedQuestions.forEach((q, i) => {
+            fixedQuestions.forEach((q, i) => {
                 answers[q] = formData.get('f'+i);
             });
-            appData.customQuestions.forEach((q, i) => {
+            customQuestions.forEach((q, i) => {
                 answers[q] = formData.get('c'+i);
             });
             
-            appData.testQuestions.forEach((q, i) => {
+            testQuestions.forEach((q, i) => {
                 const userAnswer = parseInt(formData.get('t'+i));
                 const isCorrect = userAnswer === q.correct;
                 testAnswers[q.question] = {
@@ -1185,31 +1275,35 @@ function showTab(tab) {
                 }
             });
             
-            appData.applications.push({
-                id: Date.now(),
+            const newApp = {
                 date: new Date().toLocaleString(),
                 answers: answers,
                 testAnswers: testAnswers,
                 testScore: testScore,
                 status: 'pending'
-            });
-            saveData();
+            };
+            
+            await push(ref(database, 'applications'), newApp);
+            
             alert('✅ Postulación enviada exitosamente\n📊 Puntuación automática del test: '+testScore+' puntos');
-            hideApplicationForm();
+            window.hideApplicationForm();
             e.target.reset();
-        }
+        };
 
-        function renderApplications() {
-            const pending = appData.applications.filter(a => a.status === 'pending');
-            const approved = appData.applications.filter(a => a.status === 'approved');
-            const rejected = appData.applications.filter(a => a.status === 'rejected');
+        // Gestión de aplicaciones
+        function renderApplications(apps) {
+            const appsArray = Object.entries(apps).map(([id, app]) => ({id, ...app}));
+            const pending = appsArray.filter(a => a.status === 'pending');
+            const approved = appsArray.filter(a => a.status === 'approved');
+            const rejected = appsArray.filter(a => a.status === 'rejected');
+            
             document.getElementById('pending-count').textContent = pending.length;
             document.getElementById('approved-count').textContent = approved.length;
             document.getElementById('rejected-count').textContent = rejected.length;
+            
             document.getElementById('pending-apps').innerHTML = pending.length ? pending.map(renderApp).join('') : '<p>No hay postulaciones pendientes</p>';
             document.getElementById('approved-apps').innerHTML = approved.length ? approved.map(renderApp).join('') : '<p>No hay postulaciones aprobadas</p>';
             document.getElementById('rejected-apps').innerHTML = rejected.length ? rejected.map(renderApp).join('') : '<p>No hay postulaciones rechazadas</p>';
-            updateResultsPreview();
         }
 
         function renderApp(app) {
@@ -1218,11 +1312,10 @@ function showTab(tab) {
             let html = '<div class="applicant-card"><div><span class="status-badge '+badge+'">'+badgeText+'</span> <small>'+app.date+'</small></div>';
             
             if (app.testScore !== undefined) {
-                const maxTestScore = appData.testQuestions.length * 0.5;
-                html += '<p style="margin-top:1rem; padding: 0.8rem; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 5px;"><strong>📊 Puntuación Test Automática:</strong> <span style="font-size:1.2rem;font-weight:bold;color:#1976d2;">'+app.testScore+' / '+maxTestScore+' puntos</span></p>';
+                html += '<p style="margin-top:1rem; padding: 0.8rem; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 5px;"><strong>📊 Puntuación Test Automática:</strong> <span style="font-size:1.2rem;font-weight:bold;color:#1976d2;">'+app.testScore+' puntos</span></p>';
             }
             
-            for (let [q, a] of Object.entries(app.answers)) {
+            for (let [q, a] of Object.entries(app.answers || {})) {
                 html += '<p><strong>'+q+':</strong> '+a+'</p>';
             }
             
@@ -1246,14 +1339,15 @@ function showTab(tab) {
             if (app.score !== undefined) {
                 html += '<p style="margin-top:1rem;"><strong>📊 Puntuación Final:</strong> <span style="font-size:1.2rem;font-weight:bold;color:'+(app.score>=80?'#28a745':'#dc3545')+'">'+app.score+'/100</span></p>';
             }
+            
             html += '<div style="margin-top: 1rem;">';
             if (app.status === 'pending') {
                 const maxScore = 100 - (app.testScore || 0);
                 html += '<p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;"><em>Puntuación test: '+(app.testScore || 0)+' puntos. Puedes asignar hasta '+maxScore.toFixed(1)+' puntos adicionales.</em></p>';
-                html += '<button onclick="approveApp('+app.id+')" class="btn btn-success">Aprobar</button>';
-                html += '<button onclick="rejectApp('+app.id+')" class="btn btn-danger">Rechazar</button>';
+                html += '<button onclick="approveApp(\''+app.id+'\')" class="btn btn-success">Aprobar</button>';
+                html += '<button onclick="rejectApp(\''+app.id+'\')" class="btn btn-danger">Rechazar</button>';
             }
-            html += '<button onclick="deleteApp('+app.id+')" class="btn btn-secondary">Eliminar</button></div></div>';
+            html += '<button onclick="deleteApp(\''+app.id+'\')" class="btn btn-secondary">Eliminar</button></div></div>';
             return html;
         }
 
