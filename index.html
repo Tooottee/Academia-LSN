@@ -597,6 +597,33 @@
             color: white;
         }
 
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #2a5298;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 padding: 0 1rem;
@@ -622,6 +649,10 @@
     </style>
 </head>
 <body>
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+    </div>
+
     <header class="header">
         <div class="header-content">
             <div class="logo">🚔 LA POLICÍA DE LOS SANTOS NETWORK</div>
@@ -914,12 +945,33 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
     <script>
-        // Contraseñas hasheadas con SHA-256
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAM949rVZYych3E7htCDfa4b-xnWeV1SXk",
+            authDomain: "academia-lsn.firebaseapp.com",
+            databaseURL: "https://academia-lsn-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "academia-lsn",
+            storageBucket: "academia-lsn.firebasestorage.app",
+            messagingSenderId: "351034126709",
+            appId: "1:351034126709:web:9102c360a49e3e9096633c"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Contraseñas hasheadas
         const ACCESS_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
         const ADMIN_PASSWORD_HASH = "f12101c8686f57c3ae4319ffcb083ee55796587f4bcc1bff9099f2f2aac580dc";
         let isLoggedIn = false;
         let isAdmin = false;
+
+        // Datos locales (cache)
         let appData = {
             postulacionesAbiertas: true,
             fixedQuestions: ["Nombre Discord","ID Usuario (Discord)","Edad OOC","Nombre IC","Edad IC","¿Tienes experiencia previa en el rol de la policía?","Indique donde ha roleado de policía y cuales fueron sus competencias","¿Por qué le interesaría pertenecer a la LSPD?"],
@@ -931,40 +983,68 @@
             video: {enabled: false, url: ""}
         };
 
-        window.addEventListener('DOMContentLoaded', function() {
-            const s = localStorage.getItem('lspd_full_data');
-            if (s) {
-                const loaded = JSON.parse(s);
-                // Preservar las preguntas test si existen
-                if (loaded.testQuestions) {
-                    appData.testQuestions = loaded.testQuestions;
-                }
-                if (loaded.customQuestions) {
-                    appData.customQuestions = loaded.customQuestions;
-                }
-                if (loaded.applications) {
-                    appData.applications = loaded.applications;
-                }
-                if (loaded.results) {
-                    appData.results = loaded.results;
-                }
-                if (loaded.historial) {
-                    appData.historial = loaded.historial;
-                }
-                if (loaded.postulacionesAbiertas !== undefined) {
-                    appData.postulacionesAbiertas = loaded.postulacionesAbiertas;
-                }
-                if (loaded.video) {
-                    appData.video = loaded.video;
-                }
+        // Funciones de Loading
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        // Cargar datos desde Firebase al iniciar
+        window.addEventListener('DOMContentLoaded', async function() {
+            showLoading();
+            try {
+                await loadFromFirebase();
+            } catch (error) {
+                console.error('Error al cargar datos:', error);
+                alert('Error al cargar datos. Usando valores por defecto.');
             }
+            hideLoading();
             updatePublicView();
             updateAcademyStatus();
             updateVideoDisplay();
         });
 
-        function saveData() {
-            localStorage.setItem('lspd_full_data', JSON.stringify(appData));
+        // Cargar todos los datos desde Firebase
+        async function loadFromFirebase() {
+            const snapshot = await database.ref('lspd_data').once('value');
+            const data = snapshot.val();
+            
+            if (data) {
+                if (data.postulacionesAbiertas !== undefined) appData.postulacionesAbiertas = data.postulacionesAbiertas;
+                if (data.customQuestions) appData.customQuestions = data.customQuestions;
+                if (data.testQuestions) appData.testQuestions = data.testQuestions;
+                if (data.applications) appData.applications = data.applications;
+                if (data.results) appData.results = data.results;
+                if (data.historial) appData.historial = data.historial;
+                if (data.video) appData.video = data.video;
+            }
+        }
+
+        // Guardar datos en Firebase
+        async function saveToFirebase(path = null, value = null) {
+            showLoading();
+            try {
+                if (path && value !== null) {
+                    await database.ref('lspd_data/' + path).set(value);
+                } else {
+                    await database.ref('lspd_data').set({
+                        postulacionesAbiertas: appData.postulacionesAbiertas,
+                        customQuestions: appData.customQuestions,
+                        testQuestions: appData.testQuestions,
+                        applications: appData.applications,
+                        results: appData.results,
+                        historial: appData.historial,
+                        video: appData.video
+                    });
+                }
+            } catch (error) {
+                console.error('Error al guardar:', error);
+                alert('Error al guardar los datos');
+            }
+            hideLoading();
         }
 
         function showSection(sectionId) {
@@ -996,6 +1076,7 @@
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('edit-panel').classList.add('active');
                 document.getElementById('error-msg').style.display = 'none';
+                await loadFromFirebase();
                 loadSavedResults();
                 updatePostulationStatus();
                 renderApplications();
@@ -1017,26 +1098,24 @@
             document.getElementById('password-input').value = '';
         }
 
-function showTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    event.target.classList.add('active');
-    document.getElementById(tab + '-tab').classList.add('active');
-    
-    // Renderizar preguntas test cuando se abre la pestaña
-    if (tab === 'preguntas') {
-        renderTestQuestions();
-    }
-    
-    // Actualizar video cuando se abre la pestaña
-    if (tab === 'video') {
-        updateVideoDisplay();
-    }
-}
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + '-tab').classList.add('active');
+            
+            if (tab === 'preguntas') {
+                renderTestQuestions();
+            }
+            
+            if (tab === 'video') {
+                updateVideoDisplay();
+            }
+        }
 
-        function togglePostulaciones(estado) {
+        async function togglePostulaciones(estado) {
             appData.postulacionesAbiertas = estado;
-            saveData();
+            await saveToFirebase('postulacionesAbiertas', estado);
             updatePostulationStatus();
             updatePublicView();
             updateAcademyStatus();
@@ -1068,10 +1147,10 @@ function showTab(tab) {
             }
         }
 
-        function saveResults() {
+        async function saveResults() {
             appData.results.examDate = document.getElementById('exam-date').value;
             appData.results.nextExam = document.getElementById('next-exam').value;
-            saveData();
+            await saveToFirebase('results', appData.results);
             updatePublicView();
             updateResultsPreview();
             alert('✅ Fechas guardadas exitosamente');
@@ -1157,7 +1236,7 @@ function showTab(tab) {
             document.getElementById('application-form').reset();
         }
 
-        function submitApplication(e) {
+        async function submitApplication(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const answers = {};
@@ -1192,7 +1271,8 @@ function showTab(tab) {
                 testScore: testScore,
                 status: 'pending'
             });
-            saveData();
+            
+            await saveToFirebase('applications', appData.applications);
             alert('✅ Postulación enviada exitosamente\n📊 Puntuación automática del test: '+testScore+' puntos');
             hideApplicationForm();
             e.target.reset();
@@ -1256,7 +1336,7 @@ function showTab(tab) {
             return html;
         }
 
-        function approveApp(id) {
+        async function approveApp(id) {
             const app = appData.applications.find(a => a.id === id);
             if (!app) return;
             
@@ -1287,12 +1367,12 @@ function showTab(tab) {
             const nombreCompleto = nombreIC || nombreDiscord;
             addToResults(nombreCompleto, notaFinal);
             addToHistorial(nombreDiscord, idUsuario, nombreIC, notaFinal, 'aprobado', app.date);
-            saveData();
+            await saveToFirebase();
             renderApplications();
             alert('✅ Postulación aprobada\nTest: '+testScore+' pts\nAdicional: '+notaAdicional+' pts\nTotal: '+notaFinal.toFixed(1)+'/100');
         }
 
-        function rejectApp(id) {
+        async function rejectApp(id) {
             const app = appData.applications.find(a => a.id === id);
             if (!app) return;
             
@@ -1323,12 +1403,12 @@ function showTab(tab) {
             const nombreCompleto = nombreIC || nombreDiscord;
             addToResults(nombreCompleto, notaFinal);
             addToHistorial(nombreDiscord, idUsuario, nombreIC, notaFinal, 'suspendido', app.date);
-            saveData();
+            await saveToFirebase();
             renderApplications();
             alert('⚠️ Postulación rechazada\nTest: '+testScore+' pts\nAdicional: '+notaAdicional+' pts\nTotal: '+notaFinal.toFixed(1)+'/100');
         }
 
-        function addToHistorial(nombreDiscord, idUsuario, nombreIC, puntuacion, estado, fecha) {
+        async function addToHistorial(nombreDiscord, idUsuario, nombreIC, puntuacion, estado, fecha) {
             const registro = {
                 nombreDiscord: nombreDiscord,
                 idUsuario: idUsuario,
@@ -1344,21 +1424,20 @@ function showTab(tab) {
                     appData.historial.aprobados.push(registro);
                 }
             } else {
-                // Para suspendidos, siempre añadir (para contar intentos)
                 appData.historial.suspendidos.push(registro);
             }
-            saveData();
+            await saveToFirebase('historial', appData.historial);
             renderHistorial();
         }
 
-        function addToResults(nombre, puntuacion) {
+        async function addToResults(nombre, puntuacion) {
             const linea = nombre + ' - ' + puntuacion;
             const lines = appData.results.entries.split('\n').filter(l => l.trim());
             const exists = lines.some(l => l.startsWith(nombre + ' -'));
             if (!exists) {
                 lines.push(linea);
                 appData.results.entries = lines.join('\n');
-                saveData();
+                await saveToFirebase('results', appData.results);
                 updatePublicView();
                 if (isLoggedIn) {
                     loadSavedResults();
@@ -1366,7 +1445,7 @@ function showTab(tab) {
             }
         }
 
-        function deleteApp(id) {
+        async function deleteApp(id) {
             if (confirm('¿Eliminar esta postulación?')) {
                 const app = appData.applications.find(a => a.id === id);
                 if (app) {
@@ -1374,16 +1453,16 @@ function showTab(tab) {
                     removeFromResults(nombreIC);
                 }
                 appData.applications = appData.applications.filter(a => a.id !== id);
-                saveData();
+                await saveToFirebase('applications', appData.applications);
                 renderApplications();
             }
         }
 
-        function removeFromResults(nombre) {
+        async function removeFromResults(nombre) {
             const lines = appData.results.entries.split('\n').filter(l => l.trim());
             const newLines = lines.filter(l => !l.startsWith(nombre + ' -'));
             appData.results.entries = newLines.join('\n');
-            saveData();
+            await saveToFirebase('results', appData.results);
             updatePublicView();
             if (isLoggedIn) {
                 loadSavedResults();
@@ -1402,20 +1481,20 @@ function showTab(tab) {
             ).join('');
         }
 
-        function addCustomQuestion() {
+        async function addCustomQuestion() {
             const q = document.getElementById('new-question').value.trim();
             if (q) {
                 appData.customQuestions.push(q);
-                saveData();
+                await saveToFirebase('customQuestions', appData.customQuestions);
                 renderCustomQuestions();
                 document.getElementById('new-question').value = '';
             }
         }
 
-        function deleteQuestion(i) {
+        async function deleteQuestion(i) {
             if (confirm('¿Eliminar esta pregunta?')) {
                 appData.customQuestions.splice(i, 1);
-                saveData();
+                await saveToFirebase('customQuestions', appData.customQuestions);
                 renderCustomQuestions();
             }
         }
@@ -1443,7 +1522,7 @@ function showTab(tab) {
             }).join('');
         }
 
-        function addTestQuestion() {
+        async function addTestQuestion() {
             const question = document.getElementById('new-test-question').value.trim();
             const opt1 = document.getElementById('test-option1').value.trim();
             const opt2 = document.getElementById('test-option2').value.trim();
@@ -1462,7 +1541,7 @@ function showTab(tab) {
                 correct: parseInt(correct)
             });
             
-            saveData();
+            await saveToFirebase('testQuestions', appData.testQuestions);
             renderTestQuestions();
             
             document.getElementById('new-test-question').value = '';
@@ -1475,10 +1554,10 @@ function showTab(tab) {
             alert('✅ Pregunta test añadida (vale 0.5 puntos)');
         }
 
-        function deleteTestQuestion(i) {
+        async function deleteTestQuestion(i) {
             if (confirm('¿Eliminar esta pregunta test?')) {
                 appData.testQuestions.splice(i, 1);
-                saveData();
+                await saveToFirebase('testQuestions', appData.testQuestions);
                 renderTestQuestions();
             }
         }
@@ -1504,7 +1583,6 @@ function showTab(tab) {
                 }).join('');
             }
             
-            // Agrupar suspendidos por ID de usuario o nombre de Discord
             const suspendidosAgrupados = {};
             appData.historial.suspendidos.forEach(h => {
                 const key = h.idUsuario || h.nombreDiscord || h.nombre;
@@ -1543,118 +1621,136 @@ function showTab(tab) {
             }
         }
 
-        function clearHistorialAprobados() {
+        async function clearHistorialAprobados() {
             if (!isAdmin) {
                 alert('❌ No tienes permisos para eliminar el historial. Se requiere contraseña de administrador.');
                 return;
             }
             if (confirm('¿Estás seguro de limpiar todo el historial de aprobados?')) {
                 appData.historial.aprobados = [];
-                saveData();
+                await saveToFirebase('historial', appData.historial);
                 renderHistorial();
                 alert('✅ Historial de aprobados limpiado');
             }
         }
 
-        function clearHistorialSuspendidos() {
+        async function clearHistorialSuspendidos() {
             if (!isAdmin) {
                 alert('❌ No tienes permisos para eliminar el historial. Se requiere contraseña de administrador.');
                 return;
             }
             if (confirm('¿Estás seguro de limpiar todo el historial de suspendidos?')) {
                 appData.historial.suspendidos = [];
-                saveData();
+                await saveToFirebase('historial', appData.historial);
                 renderHistorial();
                 alert('✅ Historial de suspendidos limpiado');
             }
         }
-        function toggleVideo() {
-    appData.video.enabled = document.getElementById('video-enabled').checked;
-    saveData();
-    updateVideoDisplay();
-}
 
-function toggleVideo() {
-    appData.video.enabled = document.getElementById('video-enabled').checked;
-    saveData();
-    updateVideoDisplay();
-}
+        async function toggleVideo() {
+            appData.video.enabled = document.getElementById('video-enabled').checked;
+            await saveToFirebase('video', appData.video);
+            updateVideoDisplay();
+        }
 
-function saveVideoUrl() {
-    const url = document.getElementById('video-url').value.trim();
-    if (!url) {
-        appData.video.url = '';
-        saveData();
-        updateVideoDisplay();
-        document.getElementById('video-preview').style.display = 'none';
-        alert('✅ Video eliminado');
-        return;
-    }
-    
-    // Convertir URL de YouTube a formato embed
-    let embedUrl = url;
-    
-    // YouTube - diferentes formatos
-    if (url.includes('youtube.com/watch')) {
-        const videoId = url.split('v=')[1]?.split('&')[0];
-        if (videoId) {
-            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        async function saveVideoUrl() {
+            const url = document.getElementById('video-url').value.trim();
+            if (!url) {
+                appData.video.url = '';
+                await saveToFirebase('video', appData.video);
+                updateVideoDisplay();
+                document.getElementById('video-preview').style.display = 'none';
+                alert('✅ Video eliminado');
+                return;
+            }
+            
+            let embedUrl = url;
+            
+            if (url.includes('youtube.com/watch')) {
+                const videoId = url.split('v=')[1]?.split('&')[0];
+                if (videoId) {
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                }
+            } else if (url.includes('youtu.be/')) {
+                const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+                if (videoId) {
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                }
+            } else if (url.includes('youtube.com/shorts/')) {
+                const videoId = url.split('shorts/')[1]?.split('?')[0];
+                if (videoId) {
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                }
+            } else if (url.includes('vimeo.com/') && !url.includes('/video/')) {
+                const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
+                if (videoId) {
+                    embedUrl = `https://player.vimeo.com/video/${videoId}`;
+                }
+            }
+            
+            appData.video.url = embedUrl;
+            await saveToFirebase('video', appData.video);
+            updateVideoDisplay();
+            
+            document.getElementById('video-preview').style.display = 'block';
+            document.getElementById('preview-iframe').src = embedUrl;
+            
+            alert('✅ URL del video guardada y convertida al formato correcto');
         }
-    } else if (url.includes('youtu.be/')) {
-        const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-        if (videoId) {
-            embedUrl = `https://www.youtube.com/embed/${videoId}`;
-        }
-    } else if (url.includes('youtube.com/shorts/')) {
-        const videoId = url.split('shorts/')[1]?.split('?')[0];
-        if (videoId) {
-            embedUrl = `https://www.youtube.com/embed/${videoId}`;
-        }
-    }
-    // Vimeo
-    else if (url.includes('vimeo.com/') && !url.includes('/video/')) {
-        const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
-        if (videoId) {
-            embedUrl = `https://player.vimeo.com/video/${videoId}`;
-        }
-    }
-    
-    appData.video.url = embedUrl;
-    saveData();
-    updateVideoDisplay();
-    
-    // Mostrar vista previa
-    document.getElementById('video-preview').style.display = 'block';
-    document.getElementById('preview-iframe').src = embedUrl;
-    
-    alert('✅ URL del video guardada y convertida al formato correcto');
-}
 
-function updateVideoDisplay() {
-    const videoContainer = document.getElementById('video-container');
-    const academyVideo = document.getElementById('academy-video');
-    const videoEnabled = document.getElementById('video-enabled');
-    const videoUrlInput = document.getElementById('video-url');
-    
-    if (videoContainer && academyVideo) {
-        if (appData.video.enabled && appData.video.url) {
-            videoContainer.style.display = 'block';
-            academyVideo.src = appData.video.url;
-        } else {
-            videoContainer.style.display = 'none';
-            academyVideo.src = '';
+        function updateVideoDisplay() {
+            const videoContainer = document.getElementById('video-container');
+            const academyVideo = document.getElementById('academy-video');
+            const videoEnabled = document.getElementById('video-enabled');
+            const videoUrlInput = document.getElementById('video-url');
+            
+            if (videoContainer && academyVideo) {
+                if (appData.video.enabled && appData.video.url) {
+                    videoContainer.style.display = 'block';
+                    academyVideo.src = appData.video.url;
+                } else {
+                    videoContainer.style.display = 'none';
+                    academyVideo.src = '';
+                }
+            }
+            
+            if (videoEnabled) {
+                videoEnabled.checked = appData.video.enabled;
+            }
+            if (videoUrlInput) {
+                videoUrlInput.value = appData.video.url || '';
+            }
         }
-    }
-    
-    // Actualizar controles del admin si existen
-    if (videoEnabled) {
-        videoEnabled.checked = appData.video.enabled;
-    }
-    if (videoUrlInput) {
-        videoUrlInput.value = appData.video.url || '';
-    }
-}
+
+        // Listener en tiempo real para sincronización automática
+        database.ref('lspd_data').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const oldPostulacionesState = appData.postulacionesAbiertas;
+                
+                if (data.postulacionesAbiertas !== undefined) appData.postulacionesAbiertas = data.postulacionesAbiertas;
+                if (data.customQuestions) appData.customQuestions = data.customQuestions;
+                if (data.testQuestions) appData.testQuestions = data.testQuestions;
+                if (data.applications) appData.applications = data.applications;
+                if (data.results) appData.results = data.results;
+                if (data.historial) appData.historial = data.historial;
+                if (data.video) appData.video = data.video;
+                
+                // Actualizar vistas públicas si hay cambios
+                updatePublicView();
+                updateAcademyStatus();
+                updateVideoDisplay();
+                
+                if (isLoggedIn) {
+                    renderApplications();
+                    renderCustomQuestions();
+                    renderTestQuestions();
+                    renderHistorial();
+                    updatePostulationStatus();
+                    loadSavedResults();
+                }
+            }
+        });
     </script>
 </body>
 </html>
-
