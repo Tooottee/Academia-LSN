@@ -920,7 +920,7 @@
                     <div class="admin-section">
                         <h3>URL del Video</h3>
                         <p style="color: #666; font-size: 0.95rem; margin-bottom: 1rem;">Pega la URL de YouTube o Vimeo (ejemplo: https://www.youtube.com/embed/VIDEO_ID)</p>
-                        <input type="text" id="video-url" placeholder="https://www.youtube.com/embed/VIDEO_ID" style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-bottom: 1rem;">
+                        <input type="text" id="video-url" placeholder="https://www.youtube-nocookie.com/embed/VIDEO_ID" style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 5px; margin-bottom: 1rem;">
                         <button onclick="saveVideoUrl()" class="btn btn-success" style="padding: 0.8rem 2rem;">💾 Guardar URL</button>
                         
                         <div style="margin-top: 1.5rem; padding: 1rem; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 5px;">
@@ -966,8 +966,8 @@
         const database = firebase.database();
 
         // Contraseñas hasheadas
-        const ACCESS_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
-        const ADMIN_PASSWORD_HASH = "6a979a3a9bb4aa6def68fadb9ca17d69bbd1774d5d3474644f7235e382bab6ee";
+        const ACCESS_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"; // admin123
+        const ADMIN_PASSWORD_HASH = "6a979a3a9bb4aa6def68fadb9ca17d69bbd1774d5d3474644f7235e382bab6ee"; //totels2025*
         let isLoggedIn = false;
         let isAdmin = false;
 
@@ -1669,17 +1669,22 @@
             if (url.includes('youtube.com/watch')) {
                 const videoId = url.split('v=')[1]?.split('&')[0];
                 if (videoId) {
-                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
                 }
             } else if (url.includes('youtu.be/')) {
                 const videoId = url.split('youtu.be/')[1]?.split('?')[0];
                 if (videoId) {
-                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
                 }
             } else if (url.includes('youtube.com/shorts/')) {
                 const videoId = url.split('shorts/')[1]?.split('?')[0];
                 if (videoId) {
-                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
+                }
+            } else if (url.includes('youtube.com/embed/')) {
+                const videoId = url.split('embed/')[1]?.split('?')[0];
+                if (videoId) {
+                    embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
                 }
             } else if (url.includes('vimeo.com/') && !url.includes('/video/')) {
                 const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
